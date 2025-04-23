@@ -26,6 +26,8 @@ from .utils import get_experiment_path, ensure_dir_exists
 _current_experiment = None
 _db_connection = None
 
+# Dictionary for storing user variables
+saved_vars = {}
 
 def init(
     experiment_name: Optional[str] = None,
@@ -160,6 +162,23 @@ def log(
         identifier: A unique identifier for the row.
         data: The data to log.
         savefunc: Optional function to save data to disk.
+
+    Example:
+    trackexp.log("training", "loss", iter_index, loss_value)
+                |          |         |                |
+            context        |         |                |
+         e.g.              |       "row id"           |
+       "training"      name of     of tracked         |
+     "validation"      tracked     data               |
+   "testing"           data                     the data
+                                                itself
+
+    Note, you can store information inside
+    trackexp.saved_vars = {}
+
+    and use it like
+
+    trackexp.saved_vars['iter'] = curr_iter
     """
     if _current_experiment is None:
         raise RuntimeError("No experiment initialized. Call trackexp.init() first.")

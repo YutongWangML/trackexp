@@ -44,10 +44,16 @@ numpy
 ```
 
 ## Installation
-
-``` python
-pip install --editable .
+Download directly from github:
+``` bash
+pip install --editable git+https://github.com/YutongWangML/trackexp.git
 ```
+Or if you wanna hack away, download then do
+``` bash
+git clone https://github.com/YutongWangML/trackexp.git
+pip install --editable trackexp
+```
+The `--editable` flag lets you modify this package to your own custom needs.
 
 ## Saving Files
 For data that should be saved to disk (like plots, model checkpoints, etc.), use the savefunc parameter:
