@@ -17,5 +17,6 @@ __all__ = [
     "get_experiment_path",
     "list_experiments",
     "get_data",
-    "get_metadata"
+    "get_metadata",
+    "saved_vars"
 ]
