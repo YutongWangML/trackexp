@@ -17,25 +17,22 @@ Here is a birds-eye view of how it works.
 
 ``` python
 import trackexp
-
 trackexp.init()
-
 experimental_config = {
     "learning_rate": 0.001,
     "batch_size": 32,
     "epochs": 10
 }
-
 trackexp.metadata(experimental_config)
-
 # [... inside your training loop ...]
 trackexp.log("training", "loss", iter_index, loss_value)
-
-
-
 # [... inside your validation loop ...]
 trackexp.log("validation", "accuracy", iter_index, accuracy_value)
 ```
+
+**Note**: the `trackexp.log(...)` and `trackexp.init(...)` do not even need to be in the same file, as long as `trackexp.init()` is called first.
+
+**TODO**: do the files where `log` and `init` are called from even need to be from the same directory?
 
 
 ## Requirements
@@ -70,10 +67,10 @@ trackexp.log("analysis", "learning_curve", 1, learning_data, savefunc=save_plot)
 
 
 # Why trackexp?
-Local-first: Everything is stored locally by default
-Lightweight: Small codebase that's easy to understand and modify
-SQLite-based: Enables efficient querying and live tracking
-General-purpose: Not tied to any specific ML framework
+
+- Local: Everything is on on your computer. No web.
+
+- Small: The code for the logging is all in `core.py` while the code for the post-analysis is all in `utils.py`.
 
 # License
 MIT
