@@ -30,9 +30,8 @@ trackexp.log("training", "loss", iter_index, loss_value)
 trackexp.log("validation", "accuracy", iter_index, accuracy_value)
 ```
 
-**Note**: the `trackexp.log(...)` and `trackexp.init(...)` do not even need to be in the same file, as long as `trackexp.init()` is called first.
+**Note**: the `trackexp.log(...)` and `trackexp.init(...)` do not even need to be in the same file, as long as `trackexp.init()` is reached first.
 
-**TODO**: do the files where `log` and `init` are called from even need to be from the same directory?
 
 
 ## Requirements
@@ -46,7 +45,7 @@ numpy
 ## Installation
 Download directly from github:
 ``` bash
-pip install --editable git+https://github.com/YutongWangML/trackexp.git
+pip install git+https://github.com/YutongWangML/trackexp.git
 ```
 Or if you wanna hack away, download then do
 ``` bash
