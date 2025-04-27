@@ -22,7 +22,11 @@ from humanhash import humanize # <-- Import humanize
 
 from .utils import get_experiment_path, ensure_dir_exists
 
+import time
+from typing import Dict, Tuple
+
 # Global variables to track the current experiment
+_timers: Dict[str, Dict[str, float]] = {}
 _current_experiment = None
 _db_connection = None
 
@@ -239,6 +243,72 @@ def log(
     """, (identifier_str, name, value_type, value_data, timestamp))
 
     conn.commit()
+
+def start_timer(
+    context: str,
+    identifier: Hashable
+) -> None:
+    """
+    Start a timer for the given context and identifier.
+
+    Args:
+        context: The context for the timer.
+        identifier: A unique identifier for the timer.
+    """
+    global _timers
+
+    # Initialize the context dict if it doesn't exist
+    if context not in _timers:
+        _timers[context] = {}
+
+    # Convert identifier to string for storage
+    identifier_str = str(identifier)
+
+    # Store the start time
+    _timers[context][identifier_str] = time.time()
+
+    print(f"Timer started for {context}/{identifier_str}")
+
+def stop_timer(
+    context: str,
+    identifier: Hashable
+) -> float:
+    """
+    Stop a timer for the given context and identifier and log the elapsed time.
+
+    Args:
+        context: The context for the timer.
+        identifier: A unique identifier for the timer.
+
+    Returns:
+        The elapsed time in seconds.
+
+    Raises:
+        RuntimeError: If no timer was started for this context and identifier.
+    """
+    global _timers
+
+    # Convert identifier to string for storage
+    identifier_str = str(identifier)
+
+    # Check if the timer exists
+    if context not in _timers or identifier_str not in _timers[context]:
+        raise RuntimeError(f"No timer was started for {context}/{identifier_str}")
+
+    # Calculate elapsed time
+    start_time = _timers[context][identifier_str]
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    # Remove the timer
+    del _timers[context][identifier_str]
+
+    # Log the elapsed time
+    log(context, "elapsed_time", identifier, elapsed_time)
+
+    print(f"Timer stopped for {context}/{identifier_str}: {elapsed_time:.6f} seconds")
+
+    return elapsed_time
 
 def metadata(config: Dict[str, Any]) -> None:
     """
