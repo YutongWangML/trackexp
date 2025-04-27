@@ -24,7 +24,7 @@ def ensure_dir_exists(dir_path: str) -> None:
     """
     os.makedirs(dir_path, exist_ok=True)
 
-def get_experiment_path(experiment_name: str, base_dir: str = "experiments") -> str:
+def get_experiment_path(experiment_name: str, base_dir: str = "trackexp_out") -> str:
     """
     Get the path to an experiment directory.
 
@@ -43,7 +43,7 @@ def get_experiment_path(experiment_name: str, base_dir: str = "experiments") -> 
         raise FileNotFoundError(f"Experiment '{experiment_name}' not found in '{base_dir}'")
     return path
 
-def list_experiments(base_dir: str = "experiments") -> List[Dict[str, Any]]:
+def list_experiments(base_dir: str = "trackexp_out") -> List[Dict[str, Any]]:
     """
     List all experiments in the base directory.
 
@@ -107,7 +107,7 @@ def get_data(
     context: str,
     name: Optional[str] = None,
     identifier: Optional[str] = None,
-    base_dir: str = "experiments",
+    base_dir: str = "trackexp_out",
     wide: bool = True
 ) -> Union[pd.DataFrame, Dict[Tuple[str, str], Any]]:
     """
@@ -186,7 +186,7 @@ def get_data(
 #     context: str,
 #     name: Optional[str] = None,
 #     identifier: Optional[str] = None,
-#     base_dir: str = "experiments",
+#     base_dir: str = "trackexp_out",
 #     wide: bool = True
 # ) -> Dict[Tuple[str, str], Any]:
 #     """
@@ -220,7 +220,7 @@ def get_data(
 
 #     return wide_df
 
-def get_metadata(experiment_name: str, base_dir: str = "experiments") -> Dict[str, Any]:
+def get_metadata(experiment_name: str, base_dir: str = "trackexp_out") -> Dict[str, Any]:
     """
     Get metadata for an experiment.
 

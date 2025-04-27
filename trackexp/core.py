@@ -35,7 +35,7 @@ saved_vars = {}
 
 def init(
     experiment_name: Optional[str] = None,
-    base_dir: str = "experiments",
+    base_dir: str = "trackexp_out",
     humanhash_words: int = 4,
     overwrite: bool = True,
     verbose: bool = False,
