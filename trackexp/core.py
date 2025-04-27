@@ -7,28 +7,28 @@ This module provides the main functions for experiment tracking:
 - metadata: Store experiment configuration
 """
 
-import pdb
 import os
 import json
 import sqlite3
 import datetime
 import pickle
 import shutil
-import hashlib # <-- Import hashlib
+import hashlib
 
-from typing import Any, Callable, Dict, Optional, Union, Hashable
+from typing import Any, Callable, Dict, Optional, Union, Hashable, Tuple, List
 from pathlib import Path
-from humanhash import humanize # <-- Import humanize
+from humanhash import humanize
 
 from .utils import get_experiment_path, ensure_dir_exists
 
 import time
-from typing import Dict, Tuple
 
 # Global variables to track the current experiment
 _timers: Dict[str, Dict[str, float]] = {}
 _current_experiment = None
 _db_connection = None
+_verbose = False
+_context_logs: Dict[str, Tuple[Hashable, str]] = {}
 
 # Dictionary for storing user variables
 saved_vars = {}
@@ -37,7 +37,8 @@ def init(
     experiment_name: Optional[str] = None,
     base_dir: str = "experiments",
     humanhash_words: int = 4,
-    overwrite: bool = True
+    overwrite: bool = True,
+    verbose: bool = False,
 ) -> str:
     """
     Initialize a new experiment with either a provided name or a human-readable hash name.
@@ -48,11 +49,16 @@ def init(
         base_dir: Base directory for all experiments.
         humanhash_words: Number of words to use for the human-readable hash name (if auto-generating).
         overwrite: If True and experiment_name is provided, deletes any existing directory with that name.
+        verbose: If True, enables verbose logging of data points to console.
 
     Returns:
         Path to the experiment directory.
     """
-    global _current_experiment, _db_connection
+    global _current_experiment, _db_connection, _verbose, _context_logs
+
+    # Set verbose flag and initialize context logs dictionary
+    _verbose = verbose
+    _context_logs = {}
 
     # If no custom name is provided, generate a hash-based name
     if experiment_name is None:
@@ -86,10 +92,6 @@ def init(
     # Create the experiment directory
     ensure_dir_exists(experiment_path)
 
-    # Create artifacts directory
-    artifacts_dir = os.path.join(experiment_path, "artifacts")
-    ensure_dir_exists(artifacts_dir)
-
     # Store timestamp for metadata
     timestamp = datetime.datetime.now().strftime("%Y%m%dc%H%M%Sc%f")
 
@@ -102,9 +104,9 @@ def init(
         "name": experiment_name,
         "path": experiment_path,
         "db_path": db_path,
-        "artifacts_dir": artifacts_dir,
         "timestamp": timestamp,
-        "human_hash": None if experiment_name else human_hash_name  # Only store hash if auto-generated
+        "human_hash": None if experiment_name else human_hash_name,  # Only store hash if auto-generated
+        "verbose": verbose  # Store verbose setting
     }
 
     # Save the experiment info to a JSON file
@@ -115,6 +117,9 @@ def init(
     _db_connection = conn
 
     print(f"Experiment '{experiment_name}' initialized at: {experiment_path}")
+    if verbose:
+        print(f"Verbose logging enabled for experiment '{experiment_name}'")
+
     return experiment_path
 
 
@@ -150,12 +155,19 @@ def _ensure_table_exists(context: str) -> None:
     """)
     conn.commit()
 
+
+def print_log(
+        context: str
+) -> None:
+    if _verbose:
+        current_identifier, current_log_str = _context_logs[context]
+        print(f"{context}[{current_identifier}]={{{current_log_str}}}")
+
 def log(
     context: str,
     name: str,
     identifier: Hashable,
-    data: Any,
-    savefunc: Optional[Callable[[str, str, Hashable, Any], str]] = None
+    data: Any
 ) -> None:
     """
     Log data for the current experiment.
@@ -165,7 +177,6 @@ def log(
         name: The name of the data point.
         identifier: A unique identifier for the row.
         data: The data to log.
-        savefunc: Optional function to save data to disk.
 
     Example:
     trackexp.log("training", "loss", iter_index, loss_value)
@@ -177,12 +188,16 @@ def log(
    "testing"           data                     the data
                                                 itself
 
-    Note, you can store information inside
+    Note.1: you can store information inside
     trackexp.saved_vars = {}
 
     and use it like
 
     trackexp.saved_vars['iter'] = curr_iter
+
+    Note.2: `None` is a perfectly acceptable identifier.
+    You should use it for logging "constants" e.g., performance on test set at best validation loss.
+
     """
     if _current_experiment is None:
         raise RuntimeError("No experiment initialized. Call trackexp.init() first.")
@@ -193,32 +208,6 @@ def log(
     # Ensure the table exists
     _ensure_table_exists(context)
 
-    # Handle saving to disk if savefunc is provided
-    if savefunc is not None:
-        # Get the artifacts directory
-        artifacts_dir = _current_experiment["artifacts_dir"]
-
-        # Create context-specific subdirectory
-        context_dir = os.path.join(artifacts_dir, context)
-        ensure_dir_exists(context_dir)
-
-        # Let the savefunc save the data and get the file path
-        original_path = savefunc(context, name, identifier, data)
-
-        # Extract just the filename
-        filename = os.path.basename(original_path)
-
-        # Create a path in our artifacts directory
-        artifact_path = os.path.join(context_dir, filename)
-
-        # If the file is not already in our artifacts directory, copy it there
-        if os.path.abspath(original_path) != os.path.abspath(artifact_path):
-            shutil.copy2(original_path, artifact_path)
-
-        # Store the relative path from the experiment root
-        rel_path = os.path.join("artifacts", context, filename)
-        data = rel_path
-
     # Determine the type of data and serialize appropriately
     if isinstance(data, (int, float, bool, str, type(None))):
         value_type = type(data).__name__
@@ -227,6 +216,23 @@ def log(
         # For complex objects, pickle and store as base64
         value_type = "pickle"
         value_data = pickle.dumps(data).hex()
+
+    # Handle verbose logging
+    if _verbose and isinstance(data, (int, float, bool, str, type(None))):
+        log_entry = f"{name}: {str(data)}"
+
+        if context not in _context_logs:
+            # First entry for this context
+            _context_logs[context] = (identifier, log_entry)
+        else:
+            current_identifier, current_log_str = _context_logs[context]
+
+            if current_identifier == identifier:
+                # Same identifier, append to log string
+                _context_logs[context] = (identifier, f"{current_log_str}, {log_entry}")
+            else:
+                # Different identifier, start a new one
+                _context_logs[context] = (identifier, log_entry)
 
     # Store in the database
     conn = _get_connection()
@@ -267,7 +273,6 @@ def start_timer(
     # Store the start time
     _timers[context][identifier_str] = time.time()
 
-    print(f"Timer started for {context}/{identifier_str}")
 
 def stop_timer(
     context: str,
@@ -305,8 +310,6 @@ def stop_timer(
 
     # Log the elapsed time
     log(context, "elapsed_time", identifier, elapsed_time)
-
-    print(f"Timer stopped for {context}/{identifier_str}: {elapsed_time:.6f} seconds")
 
     return elapsed_time
 
