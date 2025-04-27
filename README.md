@@ -78,5 +78,17 @@ trackexp.log("analysis", "learning_curve", 1, learning_data, savefunc=save_plot)
 
 - Small: The code for the logging is all in `core.py` while the code for the post-analysis is all in `utils.py`.
 
+- Hackable: If you use tensorboard, then one tricky thing is parsing the event file. With trackexp, it's as easy as
+
+``` python
+import trackexp
+from trackexp.utils import get_data, get_metadata, list_experiments
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df_trn = get_data('iris_classification', context = 'training')
+df_val = get_data('iris_classification', context = 'validation')
+```
+
 # License
 MIT
