@@ -108,7 +108,8 @@ def get_data(
     name: Optional[str] = None,
     identifier: Optional[str] = None,
     base_dir: str = "trackexp_out",
-    wide: bool = True
+    wide: bool = True,
+    sort_by_ident: bool = True
 ) -> Union[pd.DataFrame, Dict[Tuple[str, str], Any]]:
     """
     Get data from an experiment.
@@ -179,21 +180,22 @@ def get_data(
     # Reset the index to make 'identifier' a regular column
     wide_df = wide_df.reset_index()
 
-    # Convert to numeric, setting non-convertible values to NaN
-    wide_df['identifier'] = pd.to_numeric(wide_df['identifier'], errors='coerce')
+    if sort_by_ident:
+        # Convert to numeric, setting non-convertible values to NaN
+        wide_df['identifier'] = pd.to_numeric(wide_df['identifier'], errors='coerce')
 
-    # Check if there are any NaN values (which would indicate conversion failures)
-    if wide_df['identifier'].isna().any():
-        print("Warning: Some identifiers could not be converted to numbers.")
-        # You can get the problematic rows
-        problem_rows = wide_df[wide_df['identifier'].isna()]
-        print(f"Problematic rows:\n{problem_rows}")
+        # Check if there are any NaN values (which would indicate conversion failures)
+        if wide_df['identifier'].isna().any():
+            print("Warning: Some identifiers could not be converted to numbers.")
+            # You can get the problematic rows
+            problem_rows = wide_df[wide_df['identifier'].isna()]
+            print(f"Problematic rows:\n{problem_rows}")
 
 
-    wide_df = wide_df.sort_values('identifier')
+        wide_df = wide_df.sort_values('identifier')
 
-    if 'elapsed_time' in set(wide_df.columns):
-        wide_df['wallclocktime'] = wide_df['elapsed_time'].cumsum()
+        if 'elapsed_time' in set(wide_df.columns):
+            wide_df['wallclocktime'] = wide_df['elapsed_time'].cumsum()
 
     return wide_df
 
