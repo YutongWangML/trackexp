@@ -178,9 +178,22 @@ def get_data(
 
     # Reset the index to make 'identifier' a regular column
     wide_df = wide_df.reset_index()
-    wide_df['identifier'] = pd.to_numeric(wide_df['identifier'])
+
+    # Convert to numeric, setting non-convertible values to NaN
+    wide_df['identifier'] = pd.to_numeric(wide_df['identifier'], errors='coerce')
+
+    # Check if there are any NaN values (which would indicate conversion failures)
+    if wide_df['identifier'].isna().any():
+        print("Warning: Some identifiers could not be converted to numbers.")
+        # You can get the problematic rows
+        problem_rows = wide_df[wide_df['identifier'].isna()]
+        print(f"Problematic rows:\n{problem_rows}")
+
 
     wide_df = wide_df.sort_values('identifier')
+
+    if 'elapsed_time' in set(wide_df.columns):
+        wide_df['wallclocktime'] = wide_df['elapsed_time'].cumsum()
 
     return wide_df
 
