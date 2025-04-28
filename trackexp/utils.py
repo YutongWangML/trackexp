@@ -177,25 +177,33 @@ def get_data(
     # For wide format, pivot using the deserialized values
     wide_df = df.pivot(index='identifier', columns='name', values='value')
 
-    # Reset the index to make 'identifier' a regular column
-    wide_df = wide_df.reset_index()
 
     if sort_by_ident:
-        # Convert to numeric, setting non-convertible values to NaN
-        wide_df['identifier'] = pd.to_numeric(wide_df['identifier'], errors='coerce')
+        wide_df['_identifier'] = wide_df['identifier'].apply(lambda x: ast.literal_eval(x))
 
-        # Check if there are any NaN values (which would indicate conversion failures)
-        if wide_df['identifier'].isna().any():
-            print("Warning: Some identifiers could not be converted to numbers.")
-            # You can get the problematic rows
-            problem_rows = wide_df[wide_df['identifier'].isna()]
-            print(f"Problematic rows:\n{problem_rows}")
-
-
-        wide_df = wide_df.sort_values('identifier')
+        # Sort the DataFrame by the tuple, ensuring the second element increases fastest
+        wide_df = wide_df.sort_values(by='_identifier')
 
         if 'elapsed_time' in set(wide_df.columns):
             wide_df['wallclocktime'] = wide_df['elapsed_time'].cumsum()
+
+    # Reset the index to make 'identifier' a regular column
+    wide_df = wide_df.reset_index()
+
+    # if sort_by_ident:
+    #     # Convert to numeric, setting non-convertible values to NaN
+    #     wide_df['identifier'] = pd.to_numeric(wide_df['identifier'], errors='coerce')
+
+    #     # Check if there are any NaN values (which would indicate conversion failures)
+    #     if wide_df['identifier'].isna().any():
+    #         print("Warning: Some identifiers could not be converted to numbers.")
+    #         # You can get the problematic rows
+    #         problem_rows = wide_df[wide_df['identifier'].isna()]
+    #         print(f"Problematic rows:\n{problem_rows}")
+
+
+    #     wide_df = wide_df.sort_values('identifier')
+
 
     return wide_df
 
