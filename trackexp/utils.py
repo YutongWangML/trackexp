@@ -178,6 +178,7 @@ def get_data(
     # For wide format, pivot using the deserialized values
     wide_df = df.pivot(index='identifier', columns='name', values='value')
 
+    wide_df = wide_df.reset_index()
 
     if sort_by_ident:
         wide_df['_identifier'] = wide_df['identifier'].apply(lambda x: ast.literal_eval(x))
