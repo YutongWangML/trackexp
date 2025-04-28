@@ -178,6 +178,9 @@ def get_data(
 
     # Reset the index to make 'identifier' a regular column
     wide_df = wide_df.reset_index()
+    wide_df['identifier'] = pd.to_numeric(wide_df['identifier'])
+
+    wide_df.sort_values('identifier')
 
     return wide_df
 
