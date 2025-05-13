@@ -12,6 +12,7 @@ trackexp.log("training", "loss", iter_index, loss_value)
                                                 itself
 ```
 
+## Quick usage
 
 Here is a birds-eye view of how it works.
 
@@ -54,20 +55,75 @@ pip install --editable trackexp
 ```
 The `--editable` flag lets you modify this package to your own custom needs.
 
-## Saving Files
-For data that should be saved to disk (like plots, model checkpoints, etc.), use the savefunc parameter:
+# Doc
+
+## Init
+
 
 ``` python
-def save_plot(context, name, identifier, data):
-    filename = f"{context}_{name}_{identifier}.png"
-    plt.figure()
-    plt.plot(data)
-    plt.savefig(filename)
-    return filename
+def init(
+    experiment_name: Optional[str] = None,
+    base_dir: str = "trackexp_out",
+    humanhash_words: int = 4,
+    overwrite: bool = True,
+    verbose: bool = False,
+) -> str:
+    """
+    Initialize a new experiment with either a provided name or a human-readable hash name.
 
-trackexp.log("analysis", "learning_curve", 1, learning_data, savefunc=save_plot)
+    Args:
+        experiment_name: Optional custom name for the experiment. If provided, uses this name
+                         instead of generating a hash-based name.
+        base_dir: Base directory for all experiments.
+        humanhash_words: Number of words to use for the human-readable hash name (if auto-generating).
+        overwrite: If True and experiment_name is provided, deletes any existing directory with that name.
+        verbose: If True, enables verbose logging of data points to console.
+
+    Returns:
+        Path to the experiment directory.
+    """
 ```
 
+## Log
+
+``` python
+def log(
+    context: str,
+    name: str,
+    identifier: Hashable,
+    data: Any
+) -> None:
+    """
+    Log data for the current experiment.
+
+    Args:
+        context: The context (table) to log to.
+        name: The name of the data point.
+        identifier: A unique identifier for the row.
+        data: The data to log.
+
+    Example:
+    trackexp.log("training", "loss", iter_index, loss_value)
+                |          |         |                |
+            context        |         |                |
+         e.g.              |       "row id"           |
+       "training"      name of     of tracked         |
+     "validation"      tracked     data               |
+   "testing"           data                     the data
+                                                itself
+
+    Note.1: you can store information inside
+    trackexp.saved_vars = {}
+
+    and use it like
+
+    trackexp.saved_vars['iter'] = curr_iter
+
+    Note.2: `None` is a perfectly acceptable identifier.
+    You should use it for logging "constants" e.g., performance on test set at best validation loss.
+
+    """
+```
 
 
 
