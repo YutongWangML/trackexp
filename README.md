@@ -4,39 +4,55 @@ Here's a very quick intro:
 
 ``` python
 import trackexp as tx
-trackexp.init()
-trackexp.log("training", "loss", iter_index, loss_value)
-```
-```
-                |          |         |                |
-            context        |         |                |
-         e.g.              |       "row id"           |
-       "training"      name of     of tracked         |
-     "validation"      tracked     data               |
-   "testing"           data                     the data
-                                                itself
+
+tx.init(experiment_name = "training_recipe1")
+#                                    ^
+#                            where tracking data is stored
+#                                [optional]
+#                          if not supplied, then use humanhash3
+#                          based on current timestamp
+
+iter_index, loss_value = 0, 0.5 # [fake values for the sake of illustration]
+
+tx.log("training", "loss", iter_index, loss_value)
+#           ^          ^         ^             ^
+#        context \  name of  \ row ID     \  the data
+#       e.g.      \  tracked  \ of tracked \   itself
+#      "training"  \   data    \ data       \
+#     "validation"  \           \ can be
+#   "testing"                    \ "None"
+#  "static_metrics"
+# ... your choice
+
+import time
+for t in range(5): # [fake training loop]
+    tx.log("training", "loss", t, t**2)
+    
+    tx.start_timer('training', t) # [Option for tracking time. Creates a 'wallclocktime' tracked data under the hood.]
+
+    # [simulate some intensive calculations]
+    time.sleep( 0.1 ) 
+    # [warning: mac seems to sleep a bit longer than the requested 0.1 sec. See https://stackoverflow.com/a/30672412]
+    
+    tx.stop_timer('training', t)
+
+    # [remember to set your model to W for Wumbo, oops I mean model.eval()]
+    tx.log("validation", "accuracy", t, 10*t)
+
+tx.log('static_metric', 'test_acc', None, 100)
+df_train = tx.get_data('training_recipe1','training')
+df_valid = tx.get_data('training_recipe1', 'validation')
+df_test = tx.get_data('training_recipe1', 'static_metric')
+
+import matplotlib.pyplot as plt
+
+plt.plot(df_train['wallclocktime'], df_train['loss'])
+plt.title(tx.get_current_experiment()['name'])
+plt.show()
 ```
 
-## Quick usage
 
-Here is a birds-eye view of how it works.
-
-``` python
-import trackexp
-trackexp.init()
-experimental_config = {
-    "learning_rate": 0.001,
-    "batch_size": 32,
-    "epochs": 10
-}
-trackexp.metadata(experimental_config)
-# [... inside your training loop ...]
-trackexp.log("training", "loss", iter_index, loss_value)
-# [... inside your validation loop ...]
-trackexp.log("validation", "accuracy", iter_index, accuracy_value)
-```
-
-**Note**: the `trackexp.log(...)` and `trackexp.init(...)` do not even need to be in the same file, as long as `trackexp.init()` is reached first.
+**Note**: the `tx.log(...)` and `tx.init(...)` do not even need to be in the same file. This is useful if you have a multi-file program. Just `import trackexp as tx` wherever you want to add track. Make sure during execution, `trackexp.init()` is reached first.
 
 
 
@@ -138,7 +154,7 @@ def log(
 
 - Small: The code for the logging is all in `core.py` while the code for the post-analysis is all in `utils.py`.
 
-- Hackable: If you use tensorboard, then one tricky thing is parsing the event file. With trackexp, it's as easy as
+- Hackable: If you use tensorboard, then one tricky thing is parsing the event file. Parsing trackexp's data dump is simpler. For illustration, run `examples/neural_network_example.py`. Post-processing is as easy as
 
 ``` python
 import trackexp
