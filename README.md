@@ -1,8 +1,13 @@
 # trackexp
 trackexp is an experiment tracking module for Python for deep learning/machine learning usages.
+Here's a very quick intro:
 
-```
+``` python
+import trackexp as tx
+trackexp.init()
 trackexp.log("training", "loss", iter_index, loss_value)
+```
+```
                 |          |         |                |
             context        |         |                |
          e.g.              |       "row id"           |
