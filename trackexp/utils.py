@@ -134,7 +134,6 @@ def get_data(
         # Treat as folder name
         exp_path = get_experiment_path(experiment_name, base_dir)
 
-    exp_path = get_experiment_path(experiment_name, base_dir)
     db_path = os.path.join(exp_path, "experiment.db")
 
     if not os.path.isfile(db_path):
