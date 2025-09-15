@@ -5,6 +5,7 @@ Here's a very quick intro:
 ``` python
 import trackexp as tx
 
+# STEP 1: initialize trackexp:
 tx.init(experiment_name = "training_recipe1")
 #                                    ^
 #                            where tracking data is stored
@@ -12,8 +13,11 @@ tx.init(experiment_name = "training_recipe1")
 #                          if not supplied, then use humanhash3
 #                          based on current timestamp
 
-iter_index, loss_value = 0, 0.5 # [fake values for the sake of illustration]
+# STEP 2: crunch some numbers
+# note: these are fake values for the sake of illustration
+iter_index, loss_value = 0, 0.5 
 
+# STEP 3: record the numbers
 tx.log("training", "loss", iter_index, loss_value)
 #           ^          ^         ^             ^
 #        context \  name of  \ row ID     \  the data
@@ -24,28 +28,28 @@ tx.log("training", "loss", iter_index, loss_value)
 #  "static_metrics"
 # ... your choice
 
-import time
+# STEP 4: a more realistic look
 for t in range(5): # [fake training loop]
     tx.log("training", "loss", t, t**2)
     
-    tx.start_timer('training', t) # [Option for tracking time. Creates a 'wallclocktime' tracked data under the hood.]
+    tx.start_timer('training', t) # [Option for tracking time. Creates a 'wallclocktime' tracked data under the hood. No need to "import time"]
 
-    # [simulate some intensive calculations]
-    time.sleep( 0.1 ) 
-    # [warning: mac seems to sleep a bit longer than the requested 0.1 sec. See https://stackoverflow.com/a/30672412]
+    import time
+    time.sleep( 0.1 ) # [simulate some intensive calculations]
     
     tx.stop_timer('training', t)
 
     # [remember to set your model to W for Wumbo, oops I mean model.eval()]
     tx.log("validation", "accuracy", t, 10*t)
 
+# STEP 5: logging "static" metric
 tx.log('static_metric', 'test_acc', None, 100)
 df_train = tx.get_data('training_recipe1','training')
 df_valid = tx.get_data('training_recipe1', 'validation')
 df_test = tx.get_data('training_recipe1', 'static_metric')
 
+# STEP 6: plot your results in the same jupyter notebook
 import matplotlib.pyplot as plt
-
 plt.plot(df_train['wallclocktime'], df_train['loss'])
 plt.title(tx.get_current_experiment()['name'])
 plt.show()
