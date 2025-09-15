@@ -69,7 +69,7 @@ def init(
         digest = hasher.hexdigest()
 
         human_hash_name = humanize(digest, words=humanhash_words)
-        experiment_name = f"exp_{human_hash_name}"
+        experiment_name = f"EXP-{human_hash_name}"
 
         # Check for collisions with the generated name
         experiment_path = os.path.join(base_dir, experiment_name)
