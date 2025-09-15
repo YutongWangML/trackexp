@@ -126,6 +126,14 @@ def get_data(
     Returns:
         Either a wide DataFrame or a regular DataFrame based on the 'wide' parameter.
     """
+    if os.path.isabs(experiment_name) or os.path.sep in experiment_name:
+        # Treat as a path directly
+        exp_path = os.path.abspath(experiment_name)
+        print("It looks like you passed in a path name. All good.")
+    else:
+        # Treat as folder name
+        exp_path = get_experiment_path(experiment_name, base_dir)
+
     exp_path = get_experiment_path(experiment_name, base_dir)
     db_path = os.path.join(exp_path, "experiment.db")
 
@@ -192,61 +200,8 @@ def get_data(
     # Reset the index to make 'identifier' a regular column
     wide_df = wide_df.reset_index()
 
-    # if sort_by_ident:
-    #     # Convert to numeric, setting non-convertible values to NaN
-    #     wide_df['identifier'] = pd.to_numeric(wide_df['identifier'], errors='coerce')
-
-    #     # Check if there are any NaN values (which would indicate conversion failures)
-    #     if wide_df['identifier'].isna().any():
-    #         print("Warning: Some identifiers could not be converted to numbers.")
-    #         # You can get the problematic rows
-    #         problem_rows = wide_df[wide_df['identifier'].isna()]
-    #         print(f"Problematic rows:\n{problem_rows}")
-
-
-    #     wide_df = wide_df.sort_values('identifier')
-
 
     return wide_df
-
-# def get_data(
-#     experiment_name: str,
-#     context: str,
-#     name: Optional[str] = None,
-#     identifier: Optional[str] = None,
-#     base_dir: str = "trackexp_out",
-#     wide: bool = True
-# ) -> Dict[Tuple[str, str], Any]:
-#     """
-#     Get data from an experiment.
-
-#     Args:
-#         experiment_name: Name of the experiment.
-#         context: The context (table) to query.
-#         name: Optional name filter.
-#         identifier: Optional identifier filter.
-#         base_dir: Base directory for all experiments.
-
-#     Returns:
-#         Dictionary mapping (identifier, name) tuples to values.
-#     """
-#     exp_path = get_experiment_path(experiment_name, base_dir)
-#     db_path = os.path.join(exp_path, "experiment.db")
-
-#     if not os.path.isfile(db_path):
-#         raise FileNotFoundError(f"Database not found for experiment '{experiment_name}'")
-
-#     conn = sqlite3.connect(db_path)
-#     df = pd.read_sql_query(f"SELECT * FROM {context}", conn)
-#     if not wide:
-#         return df
-#     # Assuming your dataframe is named df
-#     wide_df = df.pivot(index='identifier', columns='name', values='value_data')
-
-#     # Optionally reset the index to make 'identifier' a regular column
-#     wide_df = wide_df.reset_index()
-
-#     return wide_df
 
 def get_metadata(experiment_name: str, base_dir: str = "trackexp_out") -> Dict[str, Any]:
     """
