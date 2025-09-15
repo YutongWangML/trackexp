@@ -129,7 +129,6 @@ def get_data(
     if os.path.isabs(experiment_name) or os.path.sep in experiment_name:
         # Treat as a path directly
         exp_path = os.path.abspath(experiment_name)
-        print("It looks like you passed in a path name. All good.")
     else:
         # Treat as folder name
         exp_path = get_experiment_path(experiment_name, base_dir)
